@@ -16,6 +16,7 @@ namespace RaceDayAPI.Tests
                 .Options;
 
             return new ApplicationDbContext(options);
+
         }
 
         private static IConfiguration CreateConfiguration()
@@ -77,6 +78,37 @@ namespace RaceDayAPI.Tests
             Assert.Equal(1, await context.Users.CountAsync());
             Assert.Equal("Participant",
                 (await context.Users.FirstAsync()).Role);
+        }
+        [Fact]
+        public async Task Register_WithDuplicateEmail_ReturnsConflict()
+        {
+            using var context = CreateContext();
+            var controller = new AuthController(context, CreateConfiguration());
+
+            var request = new RegisterRequest
+            {
+                FirstName = "Test",
+                LastName = "User",
+                Email = "duplicate@example.com",
+                Password = "StrongPass123!",
+                Role = "Participant"
+            };
+
+            await controller.Register(request);
+
+            var duplicateRequest = new RegisterRequest
+            {
+                FirstName = "Another",
+                LastName = "User",
+                Email = "duplicate@example.com",
+                Password = "AnotherPass123!",
+                Role = "Participant"
+            };
+
+            var result = await controller.Register(duplicateRequest);
+
+            Assert.Equal(1, await context.Users.CountAsync());
+            Assert.IsType<Microsoft.AspNetCore.Mvc.ConflictObjectResult>(result);
         }
     }
 }
