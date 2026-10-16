@@ -201,5 +201,32 @@ namespace RaceDayAPI.Tests
 
             Assert.NotEqual("StrongPass123!", user.Password);
         }
+        [Fact]
+        public async Task Register_WithEmailDifferentOnlyByCase_ReturnsConflict()
+        {
+            using var context = CreateContext();
+            var controller = new AuthController(context, CreateConfiguration());
+
+            await controller.Register(new RegisterRequest
+            {
+                FirstName = "Test",
+                LastName = "User",
+                Email = "case@example.com",
+                Password = "StrongPass123!",
+                Role = "Participant"
+            });
+
+            var result = await controller.Register(new RegisterRequest
+            {
+                FirstName = "Another",
+                LastName = "User",
+                Email = "CASE@example.com",
+                Password = "AnotherPass123!",
+                Role = "Participant"
+            });
+
+            Assert.IsType<Microsoft.AspNetCore.Mvc.ConflictObjectResult>(result);
+            Assert.Equal(1, await context.Users.CountAsync());
+        }
     }
 }
