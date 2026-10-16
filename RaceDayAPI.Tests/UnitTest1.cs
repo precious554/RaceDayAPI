@@ -156,5 +156,31 @@ namespace RaceDayAPI.Tests
 
             Assert.IsType<Microsoft.AspNetCore.Mvc.OkObjectResult>(result);
         }
+        [Fact]
+        public async Task Login_WithWrongPassword_ReturnsUnauthorized()
+        {
+            using var context = CreateContext();
+            var controller = new AuthController(context, CreateConfiguration());
+
+            var registerRequest = new RegisterRequest
+            {
+                FirstName = "Test",
+                LastName = "User",
+                Email = "wrongpassword@example.com",
+                Password = "StrongPass123!",
+                Role = "Participant"
+            };
+
+            await controller.Register(registerRequest);
+
+            var result = await controller.Login(
+                new RaceDayAPI.DTOs.LoginRequest
+                {
+                    Email = "wrongpassword@example.com",
+                    Password = "WrongPassword123!"
+                });
+
+            Assert.IsType<Microsoft.AspNetCore.Mvc.UnauthorizedObjectResult>(result);
+        }
     }
 }
