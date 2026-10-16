@@ -1,13 +1,82 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using RaceDayAPI.Controllers;
+using RaceDayAPI.Data;
+using RaceDayAPI.DTOs;
 using Xunit;
 
 namespace RaceDayAPI.Tests
 {
-    public class UnitTest1
+    public class AuthControllerTests
     {
-        [Fact]
-        public void Test1()
+        private static ApplicationDbContext CreateContext()
         {
-            Assert.True(true);
+            var options = new DbContextOptionsBuilder<ApplicationDbContext>()
+                .UseInMemoryDatabase(Guid.NewGuid().ToString())
+                .Options;
+
+            return new ApplicationDbContext(options);
+        }
+
+        private static IConfiguration CreateConfiguration()
+        {
+            var settings = new Dictionary<string, string?>
+            {
+                ["Jwt:Key"] = "ThisIsADevelopmentKeyThatIsLongEnough123!",
+                ["Jwt:Issuer"] = "RaceDayAPI",
+                ["Jwt:Audience"] = "RaceDayUsers",
+                ["Jwt:ExpiryMinutes"] = "60"
+            };
+
+            return new ConfigurationBuilder()
+                .AddInMemoryCollection(settings)
+                .Build();
+        }
+
+        [Fact]
+        public async Task Register_WithValidOrganiserRole_CreatesAccount()
+        {
+            using var context = CreateContext();
+            var controller = new AuthController(
+                context, CreateConfiguration());
+
+            var request = new RegisterRequest
+            {
+                FirstName = "Test",
+                LastName = "Organiser",
+                Email = "organiser@example.com",
+                Password = "StrongPass123!",
+                Role = "Organiser"
+            };
+
+            var result = await controller.Register(request);
+
+            Assert.Equal(1, await context.Users.CountAsync());
+            Assert.Equal("Organiser",
+                (await context.Users.FirstAsync()).Role);
+        }
+
+        [Fact]
+        public async Task Register_WithValidParticipantRole_CreatesAccount()
+        {
+            using var context = CreateContext();
+            var controller = new AuthController(
+                context, CreateConfiguration());
+
+            var request = new RegisterRequest
+            {
+                FirstName = "Test",
+                LastName = "Participant",
+                Email = "participant@example.com",
+                Password = "StrongPass123!",
+                Role = "Participant"
+            };
+
+            await controller.Register(request);
+
+            Assert.Equal(1, await context.Users.CountAsync());
+            Assert.Equal("Participant",
+                (await context.Users.FirstAsync()).Role);
         }
     }
 }
