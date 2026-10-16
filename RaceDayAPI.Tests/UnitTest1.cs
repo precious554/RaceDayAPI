@@ -1,8 +1,10 @@
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using RaceDayAPI.Controllers;
 using RaceDayAPI.Data;
 using RaceDayAPI.DTOs;
+using RaceDayAPI.Models;
 using Xunit;
 
 namespace RaceDayAPI.Tests
@@ -228,5 +230,82 @@ namespace RaceDayAPI.Tests
             Assert.IsType<Microsoft.AspNetCore.Mvc.ConflictObjectResult>(result);
             Assert.Equal(1, await context.Users.CountAsync());
         }
+    }
+}
+public class EventsControllerTests
+{
+    private static ApplicationDbContext CreateContext()
+    {
+        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .Options;
+
+        return new ApplicationDbContext(options);
+    }
+
+    [Fact]
+    public async Task CreateEvent_WithNoUserIdentity_ReturnsUnauthorized()
+    {
+        using var context = CreateContext();
+        var controller = new RaceDayAPI.Controllers.EventsController(context);
+
+        var eventItem = new Event
+        {
+            EventName = "Test Run",
+            EventDate = DateTime.UtcNow.AddDays(7),
+            Location = "Pretoria",
+            Distance = 5,
+            EventType = "Run"
+        };
+
+        var result = await controller.CreateEvent(eventItem);
+
+        Assert.IsType<UnauthorizedResult>(result);
+    }
+
+    [Fact]
+    public async Task CreateEvent_WithInvalidOrganiserId_ReturnsBadRequest()
+    {
+        using var context = CreateContext();
+
+        context.Users.Add(new User
+        {
+            UserID = 1,
+            FirstName = "Test",
+            LastName = "Participant",
+            Email = "participant@example.com",
+            Password = "test-password",
+            Role = "Participant"
+        });
+
+        await context.SaveChangesAsync();
+
+        var controller = new RaceDayAPI.Controllers.EventsController(context);
+        controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new Microsoft.AspNetCore.Http.DefaultHttpContext()
+        };
+
+        controller.HttpContext.User = new System.Security.Claims.ClaimsPrincipal(
+            new System.Security.Claims.ClaimsIdentity(
+                new[]
+                {
+                    new System.Security.Claims.Claim(
+                        System.Security.Claims.ClaimTypes.NameIdentifier, "1")
+                },
+                "TestAuthentication"));
+
+        var eventItem = new Event
+        {
+            EventName = "Test Run",
+            EventDate = DateTime.UtcNow.AddDays(7),
+            Location = "Pretoria",
+            Distance = 5,
+            EventType = "Run"
+        };
+
+        var result = await controller.CreateEvent(eventItem);
+
+        Assert.IsType<BadRequestObjectResult>(result);
     }
 }
