@@ -511,4 +511,62 @@ public class EventsControllerTests
 
         Assert.IsType<ForbidResult>(result);
     }
+    [Fact]
+    public async Task DeleteEvent_WhenEventBelongsToAnotherOrganiser_ReturnsForbid()
+    {
+        using var context = CreateContext();
+
+        context.Users.AddRange(
+            new User
+            {
+                UserID = 1,
+                FirstName = "First",
+                LastName = "Organiser",
+                Email = "first@example.com",
+                Password = "test-password",
+                Role = "Organiser"
+            },
+            new User
+            {
+                UserID = 2,
+                FirstName = "Second",
+                LastName = "Organiser",
+                Email = "second@example.com",
+                Password = "test-password",
+                Role = "Organiser"
+            });
+
+        context.Events.Add(new Event
+        {
+            EventID = 10,
+            OrganiserID = 1,
+            EventName = "Original Run",
+            EventDate = DateTime.UtcNow.AddDays(7),
+            Location = "Pretoria",
+            Distance = 5,
+            EventType = "Run"
+        });
+
+        await context.SaveChangesAsync();
+
+        var controller = new RaceDayAPI.Controllers.EventsController(context);
+        controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new Microsoft.AspNetCore.Http.DefaultHttpContext()
+        };
+
+        controller.HttpContext.User = new System.Security.Claims.ClaimsPrincipal(
+            new System.Security.Claims.ClaimsIdentity(
+                new[]
+                {
+                new System.Security.Claims.Claim(
+                    System.Security.Claims.ClaimTypes.NameIdentifier, "2")
+                },
+                "TestAuthentication"));
+
+        var result = await controller.DeleteEvent(10);
+
+        Assert.IsType<ForbidResult>(result);
+        Assert.Equal(1, await context.Events.CountAsync());
+    }
 }
