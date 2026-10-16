@@ -399,4 +399,50 @@ public class EventsControllerTests
 
         Assert.IsType<BadRequestObjectResult>(result);
     }
+    [Fact]
+    public async Task CreateEvent_WithValidOrganiser_ReturnsCreated()
+    {
+        using var context = CreateContext();
+
+        context.Users.Add(new User
+        {
+            UserID = 1,
+            FirstName = "Test",
+            LastName = "Organiser",
+            Email = "organiser@example.com",
+            Password = "test-password",
+            Role = "Organiser"
+        });
+
+        await context.SaveChangesAsync();
+
+        var controller = new RaceDayAPI.Controllers.EventsController(context);
+        controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new Microsoft.AspNetCore.Http.DefaultHttpContext()
+        };
+
+        controller.HttpContext.User = new System.Security.Claims.ClaimsPrincipal(
+            new System.Security.Claims.ClaimsIdentity(
+                new[]
+                {
+                new System.Security.Claims.Claim(
+                    System.Security.Claims.ClaimTypes.NameIdentifier, "1")
+                },
+                "TestAuthentication"));
+
+        var eventItem = new Event
+        {
+            EventName = "Pretoria Fun Run",
+            EventDate = DateTime.UtcNow.AddDays(7),
+            Location = "Pretoria",
+            Distance = 5,
+            EventType = "Run"
+        };
+
+        var result = await controller.CreateEvent(eventItem);
+
+        Assert.IsType<CreatedAtActionResult>(result);
+        Assert.Equal(1, await context.Events.CountAsync());
+    }
 }
