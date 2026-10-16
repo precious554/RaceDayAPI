@@ -130,5 +130,31 @@ namespace RaceDayAPI.Tests
             Assert.IsType<Microsoft.AspNetCore.Mvc.BadRequestObjectResult>(result);
             Assert.Equal(0, await context.Users.CountAsync());
         }
+        [Fact]
+        public async Task Login_WithValidCredentials_ReturnsToken()
+        {
+            using var context = CreateContext();
+            var controller = new AuthController(context, CreateConfiguration());
+
+            var registerRequest = new RegisterRequest
+            {
+                FirstName = "Test",
+                LastName = "User",
+                Email = "login@example.com",
+                Password = "StrongPass123!",
+                Role = "Participant"
+            };
+
+            await controller.Register(registerRequest);
+
+            var result = await controller.Login(
+                new RaceDayAPI.DTOs.LoginRequest
+                {
+                    Email = "login@example.com",
+                    Password = "StrongPass123!"
+                });
+
+            Assert.IsType<Microsoft.AspNetCore.Mvc.OkObjectResult>(result);
+        }
     }
 }
