@@ -82,3 +82,6 @@ Check the **Actions** tab in GitHub to view workflow results.
 ## Repository
 
 GitHub: https://github.com/precious554/RaceDayAPI
+## Successful Build Evidence
+
+![Successful GitHub Actions build](github-actions-success.png)
