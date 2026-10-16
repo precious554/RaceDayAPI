@@ -182,5 +182,24 @@ namespace RaceDayAPI.Tests
 
             Assert.IsType<Microsoft.AspNetCore.Mvc.UnauthorizedObjectResult>(result);
         }
+        [Fact]
+        public async Task Register_StoresHashedPassword()
+        {
+            using var context = CreateContext();
+            var controller = new AuthController(context, CreateConfiguration());
+
+            await controller.Register(new RegisterRequest
+            {
+                FirstName = "Test",
+                LastName = "User",
+                Email = "hash@example.com",
+                Password = "StrongPass123!",
+                Role = "Participant"
+            });
+
+            var user = await context.Users.FirstAsync();
+
+            Assert.NotEqual("StrongPass123!", user.Password);
+        }
     }
 }
