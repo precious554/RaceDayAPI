@@ -43,21 +43,24 @@ namespace RaceDayAPI.Controllers
         }
 
         // Only Organisers can create events
+
         [Authorize(Roles = "Organiser")]
         [HttpPost]
         public async Task<IActionResult> CreateEvent(Event eventItem)
         {
-            if (eventItem.OrganiserID <= 0)
-                return BadRequest(new { message = "A valid OrganiserID is required." });
-
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            if (userId == null || eventItem.OrganiserID != int.Parse(userId))
-                return Forbid();
+            if (!int.TryParse(userId, out int organiserId))
+                return Unauthorized();
+
+            var organiserExists = await _context.Users
+                .AnyAsync(u => u.UserID == organiserId && u.Role == "Organiser");
+
+            if (!organiserExists)
+                return BadRequest(new { message = "A valid Organiser account is required." });
+
             if (eventItem.Distance <= 0)
-            {
                 return BadRequest("Event distance must be greater than zero.");
-            }
 
             if (string.IsNullOrWhiteSpace(eventItem.EventType) ||
                 !new[] { "Run", "Walk", "Cycle" }
@@ -65,6 +68,9 @@ namespace RaceDayAPI.Controllers
             {
                 return BadRequest("Event type must be Run, Walk, or Cycle.");
             }
+
+            eventItem.OrganiserID = organiserId;
+
             _context.Events.Add(eventItem);
             await _context.SaveChangesAsync();
 
@@ -73,6 +79,7 @@ namespace RaceDayAPI.Controllers
                 new { id = eventItem.EventID },
                 eventItem);
         }
+
 
         // Only the Organiser who owns the event can update it
         [Authorize(Roles = "Organiser")]
