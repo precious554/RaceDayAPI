@@ -110,5 +110,25 @@ namespace RaceDayAPI.Tests
             Assert.Equal(1, await context.Users.CountAsync());
             Assert.IsType<Microsoft.AspNetCore.Mvc.ConflictObjectResult>(result);
         }
+        [Fact]
+        public async Task Register_WithInvalidRole_ReturnsBadRequest()
+        {
+            using var context = CreateContext();
+            var controller = new AuthController(context, CreateConfiguration());
+
+            var request = new RegisterRequest
+            {
+                FirstName = "Test",
+                LastName = "User",
+                Email = "invalidrole@example.com",
+                Password = "StrongPass123!",
+                Role = "Administrator"
+            };
+
+            var result = await controller.Register(request);
+
+            Assert.IsType<Microsoft.AspNetCore.Mvc.BadRequestObjectResult>(result);
+            Assert.Equal(0, await context.Users.CountAsync());
+        }
     }
 }
