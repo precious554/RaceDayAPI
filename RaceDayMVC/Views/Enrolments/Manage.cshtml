@@ -1,0 +1,74 @@
+﻿@model List<RaceDayMVC.Models.EnrolmentViewModel>
+
+@{
+    ViewData["Title"] = "Manage Enrolments";
+}
+
+<div class="container mt-4">
+
+    <h2>Event Enrolments</h2>
+    <p class="text-muted">View participants registered for this event.</p>
+
+    @if (ViewBag.Error != null)
+    {
+        <div class="alert alert-danger">@ViewBag.Error</div>
+    }
+
+    @if (Model.Count == 0)
+    {
+        <div class="alert alert-info">
+            No participants have enrolled in this event yet.
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Participant</th>
+                        <th>Email</th>
+                        <th>Category</th>
+                        <th>Distance</th>
+                        <th>Enrolment Date</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>@item.ParticipantName</td>
+                            <td>@item.ParticipantEmail</td>
+                            <td>@item.CategoryName</td>
+                            <td>@item.Distance km</td>
+                            <td>@item.EnrolmentDate.ToString("dd MMM yyyy")</td>
+                            <td>
+                                @if (item.Status == "Active")
+                                {
+                                    <span class="badge bg-success">
+                                        @item.Status
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning text-dark">
+                                        @item.Status
+                                    </span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    <a asp-controller="Events"
+       asp-action="Manage"
+       class="btn btn-secondary">
+        Back to Events
+    </a>
+
+</div>

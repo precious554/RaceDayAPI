@@ -1,0 +1,120 @@
+﻿@model List<RaceDayMVC.Models.EventViewModel>
+
+@{
+    ViewData["Title"] = "Manage Events";
+}
+
+<div class="container mt-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Manage Events</h2>
+
+        <a asp-action="Create" class="btn btn-primary">
+            + Create New Event
+        </a>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    @if (ViewBag.Error != null)
+    {
+        <div class="alert alert-danger">@ViewBag.Error</div>
+    }
+
+    @if (Model.Count == 0)
+    {
+        <div class="alert alert-info">
+            No events available. Create your first event!
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped">
+
+                <thead class="table-dark">
+                    <tr>
+                        <th>Event ID</th>
+                        <th>Event</th>
+                        <th>Date</th>
+                        <th>Location</th>
+                        <th>Distance</th>
+                        <th>Type</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>@item.EventID</td>
+                            <td>@item.EventName</td>
+                            <td>@item.EventDate.ToString("dd MMM yyyy")</td>
+                            <td>@item.Location</td>
+                            <td>@item.Distance km</td>
+                            <td>@item.EventType</td>
+
+                            <td>
+                                <a asp-action="Edit"
+                                   asp-route-id="@item.EventID"
+                                   class="btn btn-sm btn-warning">
+                                    Edit
+                                </a>
+
+                                <a asp-controller="Categories"
+                                   asp-action="Manage"
+                                   asp-route-eventId="@item.EventID"
+                                   class="btn btn-sm btn-info">
+                                    Categories
+                                </a>
+
+                                <a asp-controller="Enrolments"
+                                   asp-action="Manage"
+                                   asp-route-eventId="@item.EventID"
+                                   class="btn btn-sm btn-success">
+                                    Enrolments
+                                </a>
+
+                                <a asp-controller="Results"
+                                   asp-action="Manage"
+                                   asp-route-eventId="@item.EventID"
+                                   class="btn btn-sm btn-primary">
+                                    Record Results
+                                </a>
+
+                                <form asp-action="Delete"
+                                      asp-route-id="@item.EventID"
+                                      method="post"
+                                      style="display:inline;"
+                                      onsubmit="return confirm('Delete this event?');">
+
+                                    <button type="submit"
+                                            class="btn btn-sm btn-danger">
+                                        Delete
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+
+            </table>
+        </div>
+    }
+
+    <a asp-controller="Home"
+       asp-action="Index"
+       class="btn btn-outline-secondary">
+        Back to Dashboard
+    </a>
+
+</div>

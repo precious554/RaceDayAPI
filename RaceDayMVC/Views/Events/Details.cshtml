@@ -1,0 +1,126 @@
+﻿@model RaceDayMVC.Models.EventViewModel
+
+@{
+    ViewData["Title"] = "Event Details";
+
+    var categories = ViewBag.Categories as List<RaceDayMVC.Models.CategoryViewModel>
+                     ?? new List<RaceDayMVC.Models.CategoryViewModel>();
+}
+
+<div class="container mt-4">
+
+    <a asp-controller="Home"
+       asp-action="Index"
+       class="btn btn-outline-secondary mb-3">
+        ← Back to Dashboard
+    </a>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body p-4">
+
+            <h2>@Model.EventName</h2>
+
+            <p class="text-muted">@Model.Description</p>
+
+            <hr />
+
+            <p><strong>Date:</strong> @Model.EventDate.ToString("dd MMMM yyyy")</p>
+            <p><strong>Location:</strong> @Model.Location</p>
+            <p><strong>Distance:</strong> @Model.Distance km</p>
+            <p><strong>Event Type:</strong> @Model.EventType</p>
+
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["Success"]
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">
+            @TempData["Error"]
+        </div>
+    }
+
+    @if (ViewBag.Error != null)
+    {
+        <div class="alert alert-danger">
+            @ViewBag.Error
+        </div>
+    }
+
+    <div class="card shadow-sm">
+        <div class="card-body p-4">
+
+            <h3>Available Race Categories</h3>
+            <p class="text-muted">
+                Select your preferred race distance to enrol.
+            </p>
+
+            @if (categories.Count == 0)
+            {
+                <div class="alert alert-info">
+                    No race categories are available for this event yet.
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+
+                    <table class="table table-bordered table-striped">
+
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Category</th>
+                                <th>Distance</th>
+                                <th>Entry Fee</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            @foreach (var category in categories)
+                            {
+                                <tr>
+                                    <td>@category.CategoryName</td>
+                                    <td>@category.Distance km</td>
+                                    <td>R @category.EntryFee.ToString("N2")</td>
+                                    <td>
+                                        <form asp-controller="Events"
+                                              asp-action="Enrol"
+                                              method="post">
+
+                                            @Html.AntiForgeryToken()
+
+                                            <input type="hidden"
+                                                   name="eventId"
+                                                   value="@Model.EventID" />
+
+                                            <input type="hidden"
+                                                   name="categoryId"
+                                                   value="@category.CategoryID" />
+
+                                            <button type="submit"
+                                                    class="btn btn-success btn-sm">
+                                                Enrol Now
+                                            </button>
+
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+
+                    </table>
+
+                </div>
+            }
+
+        </div>
+    </div>
+
+</div>

@@ -1,0 +1,122 @@
+﻿@model List<RaceDayMVC.Models.EnrolmentViewModel>
+
+@{
+    ViewData["Title"] = "Record Race Results";
+    int eventId = (int)ViewBag.EventID;
+}
+
+<div class="container mt-4">
+
+    <h2>Record Race Results</h2>
+    <p class="text-muted">Enter finishing times and positions for participants.</p>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    @if (ViewBag.Error != null)
+    {
+        <div class="alert alert-danger">@ViewBag.Error</div>
+    }
+
+    @if (Model.Count == 0)
+    {
+        <div class="alert alert-info">
+            No participants have enrolled in this event yet.
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Participant</th>
+                        <th>Email</th>
+                        <th>Category</th>
+                        <th>Distance</th>
+                        <th>Finish Time</th>
+                        <th>Position</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>@item.ParticipantName</td>
+                            <td>@item.ParticipantEmail</td>
+                            <td>@item.CategoryName</td>
+                            <td>@item.Distance km</td>
+
+                            <td colspan="4">
+                                <form asp-controller="Results"
+                                      asp-action="Record"
+                                      method="post"
+                                      class="row g-2">
+
+                                    @Html.AntiForgeryToken()
+
+                                    <input type="hidden"
+                                           name="EnrolmentID"
+                                           value="@item.EnrolmentID" />
+
+                                    <input type="hidden"
+                                           name="EventID"
+                                           value="@eventId" />
+
+                                    <div class="col-md-3">
+                                        <input type="text"
+                                               name="FinishTime"
+                                               class="form-control"
+                                               placeholder="HH:MM:SS" />
+                                    </div>
+
+                                    <div class="col-md-2">
+                                        <input type="number"
+                                               name="Position"
+                                               class="form-control"
+                                               placeholder="Position"
+                                               min="1" />
+                                    </div>
+
+                                    <div class="col-md-3">
+                                        <select name="ResultStatus"
+                                                class="form-select">
+                                            <option value="Completed">Completed</option>
+                                            <option value="Did Not Finish">Did Not Finish</option>
+                                            <option value="Disqualified">Disqualified</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <button type="submit"
+                                                class="btn btn-success btn-sm">
+                                            Save Result
+                                        </button>
+                                    </div>
+
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    <a asp-controller="Events"
+       asp-action="Manage"
+       class="btn btn-secondary">
+        Back to Events
+    </a>
+
+</div>

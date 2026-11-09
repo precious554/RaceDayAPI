@@ -1,0 +1,85 @@
+﻿@model List<RaceDayMVC.Models.ResultViewModel>
+
+@{
+    ViewData["Title"] = "My Results";
+}
+
+<div class="container mt-4">
+
+    <h2>My Race Results</h2>
+    <p class="text-muted">View your performance and finishing positions.</p>
+
+    @if (ViewBag.Error != null)
+    {
+        <div class="alert alert-danger">@ViewBag.Error</div>
+    }
+
+    @if (Model.Count == 0)
+    {
+        <div class="alert alert-info">
+            You don't have any results yet. Your results will appear here once an organiser publishes them.
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Event</th>
+                        <th>Category</th>
+                        <th>Distance</th>
+                        <th>Finish Time</th>
+                        <th>Position</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>@item.EventName</td>
+                            <td>@item.CategoryName</td>
+                            <td>@item.Distance km</td>
+
+                            <td>
+                                @(item.FinishTime.HasValue
+                                                        ? item.FinishTime.Value.ToString(@"hh\:mm\:ss")
+                                                        : "Not recorded")
+                                                                     </td>
+
+                            <td>
+                                @(item.Position.HasValue
+                                                        ? item.Position.ToString()
+                                                        : "Not recorded")
+                    </td>
+
+                            <td>
+                        @if (item.ResultStatus == "Completed")
+                                {
+                                    <span class="badge bg-success">Completed</span>
+                                }
+                                else if (item.ResultStatus == "Did Not Finish")
+                                {
+                                    <span class="badge bg-warning text-dark">Did Not Finish</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">@item.ResultStatus</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    <a asp-controller="Home"
+       asp-action="Index"
+       class="btn btn-secondary">
+        Back to Dashboard
+    </a>
+
+</div>

@@ -1,0 +1,80 @@
+﻿@model List<RaceDayMVC.Models.CategoryViewModel>
+
+@{
+    ViewData["Title"] = "Manage Categories";
+}
+
+<div class="container mt-4">
+
+    <h2>Manage Event Categories</h2>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    @if (ViewBag.Error != null)
+    {
+        <div class="alert alert-danger">@ViewBag.Error</div>
+    }
+
+    <a asp-action="Create"
+       asp-route-eventId="@ViewBag.EventID"
+       class="btn btn-primary mb-3">
+        + Add Category
+    </a>
+
+    <table class="table table-bordered table-striped">
+        <thead class="table-dark">
+            <tr>
+                <th>Category</th>
+                <th>Distance (km)</th>
+                <th>Entry Fee (R)</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.CategoryName</td>
+                    <td>@item.Distance</td>
+                    <td>R @item.EntryFee</td>
+                    <td>
+                        <a asp-action="Edit"
+                           asp-route-id="@item.CategoryID"
+                           asp-route-eventId="@item.EventID"
+                           class="btn btn-sm btn-warning">
+                            Edit
+                        </a>
+
+                        <form asp-action="Delete"
+                              asp-route-id="@item.CategoryID"
+                              asp-route-eventId="@item.EventID"
+                              method="post"
+                              style="display:inline;"
+                              onsubmit="return confirm('Delete this category?');">
+
+                            <button type="submit"
+                                    class="btn btn-sm btn-danger">
+                                Delete
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <a asp-controller="Events" asp-action="Manage"
+       class="btn btn-secondary">
+        Back to Events
+    </a>
+
+</div>
