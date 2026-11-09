@@ -23,5 +23,7 @@ namespace RaceDayMVC.Models
 
         [Required]
         public string EventType { get; set; } = "Run";
+
+        public string? ImageUrl { get; set; }
     }
 }

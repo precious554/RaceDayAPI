@@ -10,5 +10,8 @@
         public string? Description { get; set; }
         public decimal Distance { get; set; }
         public string EventType { get; set; } = "Run";
+
+        // Azure event banner image URL
+        public string? ImageUrl { get; set; }
     }
 }

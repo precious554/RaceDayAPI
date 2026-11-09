@@ -101,5 +101,111 @@ namespace RaceDayMVC.Controllers
 
             return View(model);
         }
+
+        // Upload profile picture
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UploadPicture(IFormFile file)
+        {
+            if (string.IsNullOrEmpty(
+                HttpContext.Session.GetString("JWTToken")))
+            {
+                return RedirectToAction("Login", "Auth");
+            }
+
+            if (file == null || file.Length == 0)
+            {
+                TempData["Error"] = "Please select a picture.";
+                return RedirectToAction("Index");
+            }
+
+            if (file.Length > 5 * 1024 * 1024)
+            {
+                TempData["Error"] =
+                    "Picture must not exceed 5 MB.";
+
+                return RedirectToAction("Index");
+            }
+
+            var allowedTypes = new[]
+            {
+                "image/jpeg",
+                "image/png",
+                "image/webp"
+            };
+
+            if (!allowedTypes.Contains(
+                file.ContentType.ToLowerInvariant()))
+            {
+                TempData["Error"] =
+                    "Only JPG, PNG and WEBP pictures are allowed.";
+
+                return RedirectToAction("Index");
+            }
+
+            using var content = new MultipartFormDataContent();
+
+            await using var stream = file.OpenReadStream();
+
+            using var fileContent = new StreamContent(stream);
+
+            fileContent.Headers.ContentType =
+                new MediaTypeHeaderValue(file.ContentType);
+
+            content.Add(
+                fileContent,
+                "file",
+                Path.GetFileName(file.FileName));
+
+            var client = GetApiClient();
+
+            var response = await client.PostAsync(
+                "api/users/profile/picture",
+                content);
+
+            if (response.IsSuccessStatusCode)
+            {
+                TempData["Success"] =
+                    "Profile picture uploaded successfully.";
+            }
+            else
+            {
+                var error =
+                    await response.Content.ReadAsStringAsync();
+
+                TempData["Error"] =
+                    $"Unable to upload profile picture. {error}";
+            }
+
+            return RedirectToAction("Index");
+        }
+
+        // Retrieve profile picture through the API
+        [HttpGet]
+        public async Task<IActionResult> Picture()
+        {
+            if (string.IsNullOrEmpty(
+                HttpContext.Session.GetString("JWTToken")))
+            {
+                return Unauthorized();
+            }
+
+            var client = GetApiClient();
+
+            var response = await client.GetAsync(
+                "api/users/profile/picture");
+
+            if (!response.IsSuccessStatusCode)
+                return NotFound();
+
+            var imageBytes =
+                await response.Content.ReadAsByteArrayAsync();
+
+            var contentType =
+                response.Content.Headers.ContentType?.MediaType
+                ?? "image/jpeg";
+
+            return File(imageBytes, contentType);
+        }
     }
 }

@@ -4,7 +4,7 @@
     ViewData["Title"] = "My Profile";
 }
 
-<div class="container mt-4">
+<div class="container mt-4 mb-5">
 
     <div class="card shadow-sm p-4">
 
@@ -20,12 +20,78 @@
             </div>
         }
 
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger">
+                @TempData["Error"]
+            </div>
+        }
+
         @if (ViewBag.Error != null)
         {
             <div class="alert alert-danger">
                 @ViewBag.Error
             </div>
         }
+
+        <hr />
+
+        <h4>Profile Picture</h4>
+
+        <div class="mb-3 text-center">
+            @if (!string.IsNullOrEmpty(Model?.ProfilePictureUrl))
+            {
+                <img src="@Url.Action("Picture", "Profile")"
+                     alt="Profile Picture"
+                     class="rounded-circle shadow"
+                     style="width:150px; height:150px; object-fit:cover;" />
+            }
+            else
+            {
+                <div class="rounded-circle bg-light border d-flex align-items-center justify-content-center mx-auto"
+                     style="width:150px; height:150px;">
+                    <span class="text-muted">No picture</span>
+                </div>
+            }
+        </div>
+
+        <p class="text-muted">
+            Upload a profile picture to personalise your RaceDay account.
+        </p>
+
+        <form asp-controller="Profile"
+              asp-action="UploadPicture"
+              method="post"
+              enctype="multipart/form-data">
+
+            @Html.AntiForgeryToken()
+
+            <div class="mb-3">
+                <label for="file" class="form-label">
+                    Choose Profile Picture
+                </label>
+
+                <input type="file"
+                       name="file"
+                       id="file"
+                       class="form-control"
+                       accept=".jpg,.jpeg,.png,.webp"
+                       required />
+
+                <small class="text-muted">
+                    Accepted formats: JPG, PNG and WEBP. Maximum size: 5 MB.
+                </small>
+            </div>
+
+            <button type="submit" class="btn btn-success">
+                Upload Picture
+            </button>
+
+        </form>
+
+        <hr class="my-4" />
+
+        <h4>Personal Information</h4>
 
         <form asp-action="Index" method="post">
 
@@ -39,7 +105,9 @@
                 <label asp-for="FirstName" class="form-label">
                     First Name
                 </label>
+
                 <input asp-for="FirstName" class="form-control" />
+
                 <span asp-validation-for="FirstName"
                       class="text-danger"></span>
             </div>
@@ -48,7 +116,9 @@
                 <label asp-for="LastName" class="form-label">
                     Last Name
                 </label>
+
                 <input asp-for="LastName" class="form-control" />
+
                 <span asp-validation-for="LastName"
                       class="text-danger"></span>
             </div>
@@ -57,14 +127,17 @@
                 <label asp-for="Email" class="form-label">
                     Email Address
                 </label>
+
                 <input asp-for="Email" class="form-control" />
+
                 <span asp-validation-for="Email"
                       class="text-danger"></span>
             </div>
 
             <div class="mb-3">
                 <label class="form-label">Account Role</label>
-                <input value="@Model.Role"
+
+                <input value="@Model?.Role"
                        class="form-control"
                        readonly />
             </div>

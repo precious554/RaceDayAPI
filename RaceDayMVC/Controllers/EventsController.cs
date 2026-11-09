@@ -40,7 +40,7 @@ namespace RaceDayMVC.Controllers
             return HttpContext.Session.GetString("Role") == "Participant";
         }
 
-        // Participant and organiser event listing
+        // Retrieve events
         [HttpGet]
         public async Task<IActionResult> GetEvents()
         {
@@ -67,7 +67,7 @@ namespace RaceDayMVC.Controllers
             }
         }
 
-        // Participant views event details and available categories
+        // Participant views event details and categories
         [HttpGet]
         public async Task<IActionResult> Details(int id)
         {
@@ -108,7 +108,26 @@ namespace RaceDayMVC.Controllers
             return View(eventItem);
         }
 
-        // Participant enrols in a selected category
+        // Display event banner through the API
+        [HttpGet]
+        public async Task<IActionResult> Banner(int id)
+        {
+            var client = _httpClientFactory.CreateClient("RaceDayAPI");
+
+            var response = await client.GetAsync($"api/events/{id}/banner");
+
+            if (!response.IsSuccessStatusCode)
+                return NotFound();
+
+            var imageBytes = await response.Content.ReadAsByteArrayAsync();
+
+            var contentType =
+                response.Content.Headers.ContentType?.MediaType ?? "image/jpeg";
+
+            return File(imageBytes, contentType);
+        }
+
+        // Participant enrols in a category
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Enrol(int eventId, int categoryId)
@@ -168,7 +187,7 @@ namespace RaceDayMVC.Controllers
             return View();
         }
 
-        // Send new event to API
+        // Create event through API
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(EventViewModel model)
@@ -242,6 +261,74 @@ namespace RaceDayMVC.Controllers
             TempData["Success"] = "Event updated successfully!";
 
             return RedirectToAction("Manage");
+        }
+
+        // Upload event banner through the API to Azure Blob Storage
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UploadBanner(int id, IFormFile file)
+        {
+            if (!IsOrganiser())
+                return RedirectToAction("Login", "Auth");
+
+            if (file == null || file.Length == 0)
+            {
+                TempData["Error"] = "Please select an event banner.";
+                return RedirectToAction("Edit", new { id });
+            }
+
+            if (file.Length > 5 * 1024 * 1024)
+            {
+                TempData["Error"] = "Banner must not exceed 5 MB.";
+                return RedirectToAction("Edit", new { id });
+            }
+
+            var allowedTypes = new[]
+            {
+                "image/jpeg",
+                "image/png",
+                "image/webp"
+            };
+
+            if (!allowedTypes.Contains(file.ContentType.ToLowerInvariant()))
+            {
+                TempData["Error"] = "Only JPG, PNG and WEBP images are allowed.";
+                return RedirectToAction("Edit", new { id });
+            }
+
+            using var content = new MultipartFormDataContent();
+
+            await using var stream = file.OpenReadStream();
+
+            using var fileContent = new StreamContent(stream);
+
+            fileContent.Headers.ContentType =
+                new MediaTypeHeaderValue(file.ContentType);
+
+            content.Add(
+                fileContent,
+                "file",
+                Path.GetFileName(file.FileName));
+
+            var client = GetApiClient();
+
+            var response = await client.PostAsync(
+                $"api/events/{id}/banner",
+                content);
+
+            if (response.IsSuccessStatusCode)
+            {
+                TempData["Success"] = "Event banner uploaded successfully!";
+            }
+            else
+            {
+                var error = await response.Content.ReadAsStringAsync();
+
+                TempData["Error"] =
+                    $"Banner upload failed. API Status: {(int)response.StatusCode} ({response.StatusCode}). Details: {error}";
+            }
+
+            return RedirectToAction("Edit", new { id });
         }
 
         // Delete event through API
